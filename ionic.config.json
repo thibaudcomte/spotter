@@ -1,0 +1,7 @@
+{
+  "name": "spotter",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}

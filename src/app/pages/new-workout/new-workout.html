@@ -1,0 +1,47 @@
+<p>Dernier programme réalisé le {{ lastProgramWorkoutDate() | date: 'dd/MM/yyyy' }}</p>
+
+@if (workout()) {
+  <div class="grid gap-4">
+    @for (exercise of workout()?.exercises; track exercise.id) {
+      <fieldset class="border-orange-500 m-1 p-1 rounded border-2">
+        <legend>{{ exercise.name }} ({{ exercise.sets.length }} séries)</legend>
+        <div class="grid gap-4">
+          @for (set of exercise.sets; track $index) {
+            <div class="border-orange-200 m-1 p-1 rounded border">
+              <p>
+                Série {{ $index + 1 }}
+                @if (set.lastReps && set.lastWeight) {
+                  <em> - Dernière série : {{ set.lastReps }} reps, {{ set.lastWeight }} kg</em>
+                }
+              </p>
+
+              <div class="grid grid-cols-2 gap-2">
+                <label for="reps-{{ exercise.id }}-{{ $index }}"
+                  >Reps:
+                  <input
+                    id="reps-{{ exercise.id }}-{{ $index }}"
+                    type="number"
+                    inputmode="numeric"
+                    [value]="set.reps"
+                    placeholder="Reps"
+                  />
+                </label>
+
+                <label for="weight-{{ exercise.id }}-{{ $index }}"
+                  >Poids (kg):
+                  <input
+                    id="weight-{{ exercise.id }}-{{ $index }}"
+                    type="number"
+                    inputmode="numeric"
+                    [value]="set.weight"
+                    placeholder="Poids (kg)"
+                  />
+                </label>
+              </div>
+            </div>
+          }
+        </div>
+      </fieldset>
+    }
+  </div>
+}

@@ -1,0 +1,21 @@
+@for (program of programs(); track program.id) {
+  <button
+    class="border-orange-500 m-1 p-1 rounded border-2 hover:bg-orange-200 transition-all cursor-pointer"
+    [class.bg-orange-200]="selectedProgram()?.id === program.id"
+    (click)="selectProgram(program)"
+  >
+    {{ program.name }}
+  </button>
+}
+
+@for (exercise of programExercises.value(); track exercise.id) {
+  <div class="border-orange-500 m-1 p-1 rounded border-2">
+    <div>{{ exercise.name }}</div>
+    <div>Sets: {{ exercise.sets }}</div>
+    <div>Reps: {{ exercise.reps }}</div>
+  </div>
+}
+
+<button
+  class="border-orange-500 m-1 p-1 rounded border-2 hover:bg-orange-200 transition-all cursor-pointer"
+  [routerLink]="['/new-workout']">New Workout</button>
