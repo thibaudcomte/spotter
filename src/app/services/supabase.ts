@@ -2,6 +2,7 @@ import { Service } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 import { Database } from '../models/database.types';
+import { Workout } from '../models/workout';
 
 export type Program = { id: number; name: string };
 export type ProgramExercise = { id: number; name: string; sets: number; reps: number };
@@ -40,7 +41,7 @@ export class SupabaseService {
   async getProgramExercises(programId: number): Promise<ProgramExercise[]> {
     const { data, error } = await this.supabase
       .from('program_exercises')
-      .select('id, default_sets, default_reps, exercises(name)')
+      .select('id, default_sets, default_reps, exercises(id, name)')
       .eq('program_id', programId);
 
     if (error) {
@@ -49,7 +50,7 @@ export class SupabaseService {
     }
 
     return data.map((row) => ({
-      id: row.id,
+      id: row.exercises.id,
       name: row.exercises.name,
       sets: row.default_sets ?? 0,
       reps: row.default_reps ?? 0,
@@ -59,7 +60,7 @@ export class SupabaseService {
   async getLastProgramWorkoutDetails(programId: number) : Promise<LastProgramWorkoutDetails | null> {
     const { data, error } = await this.supabase
       .from('workouts')
-      .select('id, program_id, performed_at, workout_exercises(id, exercise_sets(reps, weight), exercises(name))')
+      .select('id, program_id, performed_at, workout_exercises(exercise_sets(reps, weight), exercises(id, name))')
       .eq('program_id', programId)
       .order('performed_at', { ascending: false })
       .limit(1)
@@ -79,7 +80,7 @@ export class SupabaseService {
       program_id: data.program_id,
       date: data.performed_at,
       exercises: data.workout_exercises.map((exercise) => ({
-        id: exercise.id,
+        id: exercise.exercises.id,
         name: exercise.exercises.name,
         sets: exercise.exercise_sets.map((set) => ({
           reps: set.reps,
@@ -87,5 +88,62 @@ export class SupabaseService {
         })),
       })),
     } as LastProgramWorkoutDetails;
+  }
+
+  async saveWorkout(workout: Workout): Promise<number> {
+    const { data: workoutData, error: workoutError } = await this.supabase
+      .from('workouts')
+      .insert({
+        program_id: workout.programId,
+        performed_at: workout.date,
+        notes: null,
+      })
+      .select('id')
+      .single();
+
+    if (workoutError || !workoutData) {
+      console.error('Error creating workout:', workoutError);
+      throw new Error(workoutError?.message ?? 'Unable to create workout');
+    }
+
+    const workoutId = workoutData.id;
+
+    for (const [exerciseIndex, exercise] of workout.exercises.entries()) {
+      const { data: workoutExerciseData, error: workoutExerciseError } = await this.supabase
+        .from('workout_exercises')
+        .insert({
+          workout_id: workoutId,
+          exercise_id: exercise.id,
+          position: exerciseIndex,
+          notes: null,
+        })
+        .select('id')
+        .single();
+
+      if (workoutExerciseError || !workoutExerciseData) {
+        console.error('Error creating workout exercise:', workoutExerciseError);
+        throw new Error(workoutExerciseError?.message ?? 'Unable to create workout exercise');
+      }
+
+      const workoutExerciseId = workoutExerciseData.id;
+
+      for (const [setIndex, set] of exercise.sets.entries()) {
+        const { error: setError } = await this.supabase.from('exercise_sets').insert({
+          workout_exercise_id: workoutExerciseId,
+          set_index: setIndex,
+          reps: set.reps ?? null,
+          weight: set.weight ?? null,
+          notes: null,
+          rpe: null,
+        });
+
+        if (setError) {
+          console.error('Error creating exercise set:', setError);
+          throw new Error(setError.message);
+        }
+      }
+    }
+
+    return workoutId;
   }
 }

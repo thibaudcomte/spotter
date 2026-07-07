@@ -5,8 +5,8 @@ export type Workout = {
     id: number;
     name: string;
     sets: {
-      reps?: number;
-      weight?: number;
+      reps: number;
+      weight: number;
       lastReps?: number;
       lastWeight?: number;
     }[];

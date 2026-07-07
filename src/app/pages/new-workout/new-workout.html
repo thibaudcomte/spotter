@@ -2,46 +2,48 @@
 
 @if (workout()) {
   <div class="grid gap-4">
-    @for (exercise of workout()?.exercises; track exercise.id) {
+    @for (exercise of workout()?.exercises; track exercise.id; let iExercise = $index) {
       <fieldset class="border-orange-500 m-1 p-1 rounded border-2">
         <legend>{{ exercise.name }} ({{ exercise.sets.length }} séries)</legend>
         <div class="grid gap-4">
-          @for (set of exercise.sets; track $index) {
+          @for (set of exercise.sets; track $index; let iSet = $index) {
             <div class="border-orange-200 m-1 p-1 rounded border">
               <p>
                 Série {{ $index + 1 }}
                 @if (set.lastReps && set.lastWeight) {
-                  <em> - Dernière série : {{ set.lastReps }} reps, {{ set.lastWeight }} kg</em>
+                  <em class="text-sm text-gray-500">
+                    - Dernière série : {{ set.lastReps }} reps, {{ set.lastWeight }} kg</em
+                  >
                 }
               </p>
 
               <div class="grid grid-cols-2 gap-2">
-                <label for="reps-{{ exercise.id }}-{{ $index }}"
-                  >Reps:
-                  <input
-                    id="reps-{{ exercise.id }}-{{ $index }}"
-                    type="number"
-                    inputmode="numeric"
-                    [value]="set.reps"
-                    placeholder="Reps"
-                  />
-                </label>
-
-                <label for="weight-{{ exercise.id }}-{{ $index }}"
-                  >Poids (kg):
-                  <input
-                    id="weight-{{ exercise.id }}-{{ $index }}"
-                    type="number"
-                    inputmode="numeric"
-                    [value]="set.weight"
-                    placeholder="Poids (kg)"
-                  />
-                </label>
+                <input
+                  id="reps-{{ exercise.id }}-{{ $index }}"
+                  type="number"
+                  inputmode="numeric"
+                  [formField]="workoutForm.exercises[iExercise].sets[iSet].reps"
+                  placeholder="Reps"
+                />
+                <input
+                  id="weight-{{ exercise.id }}-{{ $index }}"
+                  type="number"
+                  inputmode="numeric"
+                  [formField]="workoutForm.exercises[iExercise].sets[iSet].weight"
+                  placeholder="Poids (kg)"
+                />
               </div>
             </div>
           }
         </div>
       </fieldset>
     }
+
+    <button
+      class="border-orange-500 m-1 p-1 rounded border-2 hover:bg-orange-200 transition-all cursor-pointer"
+      (click)="saveWorkout()"
+    >
+      Enregistrer le workout
+    </button>
   </div>
 }
